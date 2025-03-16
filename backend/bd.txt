@@ -1,0 +1,50 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    telegram_username TEXT UNIQUE,
+    phone_number TEXT UNIQUE
+);
+CREATE TABLE organizations (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    founder_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE TABLE organization_members (
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    organization_id INT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, organization_id)
+);
+CREATE TABLE events (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT CHECK (LENGTH(description) <= 200),
+    category TEXT NOT NULL,
+    is_public BOOLEAN NOT NULL DEFAULT TRUE,
+    status TEXT CHECK (status IN ('active', 'completed')) NOT NULL DEFAULT 'active',
+    event_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    location TEXT NOT NULL,
+    creator_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    organization_id INT REFERENCES organizations(id) ON DELETE SET NULL
+);
+CREATE TABLE event_photos (
+    id SERIAL PRIMARY KEY,
+    event_id INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    photo_url TEXT NOT NULL
+);
+CREATE TABLE event_participants (
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    event_id INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, event_id)
+);
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    event_id INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    type TEXT CHECK (type IN ('canceled', 'rescheduled', 'reminder_1d')) NOT NULL,
+    sent_at TIMESTAMP DEFAULT NOW()
+);
