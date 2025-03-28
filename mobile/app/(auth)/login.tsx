@@ -4,6 +4,7 @@ import { colors } from "@/constants/colors";
 import { Link, router } from "expo-router";
 import { useContext, useState } from "react";
 import {
+  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -24,20 +25,31 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch("http://192.168.0.105:8080/login", {
+      const response = await fetch("http://192.168.0.106:8080/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 401) {
+          Alert.alert("Ошибка", errorData.error);
+        } else if (response.status === 500) {
+          Alert.alert("Ошибка сервера", "Попробуйте позже.");
+        } else {
+          Alert.alert("Ошибка", errorData.error);
+        }
+        return;
+      }
+
       const data = await response.json();
-      if (response.ok && auth) {
+      if (auth) {
         auth.login(data.token);
         router.replace("/(root)/(tabs)/home");
-      } else {
-        setError("Неверные данные");
       }
     } catch (error) {
-      setError("Ошибка сервера");
+      Alert.alert("Ошибка сервера", "Проверьте подключение.");
     }
   };
 

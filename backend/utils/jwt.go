@@ -2,17 +2,18 @@ package utils
 
 import (
 	"errors"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 )
 
-var jwtKey = []byte("exesakredasupersecretkey")
+var jwtKey = []byte(os.Getenv("JWT_SECRET_KEY"))
 
 func GenerateJWT(username string) (string, error) {
 	claims := &jwt.MapClaims{
 		"username": username,
-		"exp":      time.Now().Add(time.Hour * 1).Unix(),
+		"exp":      time.Now().Add(time.Hour * 24 * 30).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

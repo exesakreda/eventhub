@@ -1,25 +1,33 @@
 package main
 
 import (
+	"eventhub/database"
 	"eventhub/handlers"
 	"eventhub/middleware"
-	"eventhub/storage"
 	"fmt"
-	"net/http"
+	"log"
+
+	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
-	storage.InitDB()
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
-	PORT := 8080
-	addr := fmt.Sprintf(":%d", PORT)
+	database.ConnectToDB()
+	database.MigrateDB()
+	fmt.Println("Успешное подключение к БД!")
 
-	mux := http.NewServeMux()
+	e := echo.New()
 
-	mux.HandleFunc("/login", handlers.LoginHandler)
-	mux.HandleFunc("/register", handlers.RegistrationHandler)
-	mux.Handle("/getuserdata", middleware.AuthMiddleware(http.HandlerFunc(handlers.GetUserData)))
+	e.POST("/login", handlers.LoginHandler)
+	e.POST("/register", handlers.RegistrationHandler)
+	e.POST("/create_event", handlers.CreateEventHandler, middleware.AuthMiddleware)
 
-	fmt.Println("Сервер запущен на порту ", PORT)
-	http.ListenAndServe(addr, mux)
+	e.GET("/getuserdata", handlers.GetUserData, middleware.AuthMiddleware)
+	e.GET("/getevents", handlers.GetEvents, middleware.AuthMiddleware)
+
+	e.Start(":8080")
 }

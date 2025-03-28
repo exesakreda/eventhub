@@ -1,64 +1,72 @@
 package handlers
 
 import (
-	"encoding/json"
+	"eventhub/database"
 	"eventhub/models"
-	"eventhub/storage"
 	"eventhub/utils"
-	"log"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+func LoginHandler(c echo.Context) error {
 	var creds models.LoginCredentials
-	err := json.NewDecoder(r.Body).Decode(&creds)
-	if err != nil {
-		http.Error(w, "Ошибка при обработке запроса", http.StatusBadRequest)
-		return
+	if err := c.Bind(&creds); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный запрос"})
 	}
 
-	if !storage.ValidateUser(creds.Username, creds.Password) {
-		http.Error(w, "Неверный логин или пароль", http.StatusUnauthorized)
-		return
+	valid, err := database.ValidateUser(creds.Username, creds.Password)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Неверный логин или пароль"})
+		}
+		c.Logger().Errorf("Ошибка при проверке данных пользователя: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка при проверке данных пользователя"})
+	}
+	if !valid {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Неверный логин или пароль"})
 	}
 
 	token, err := utils.GenerateJWT(creds.Username)
 	if err != nil {
-		http.Error(w, "Ошибка генерации токена", http.StatusInternalServerError)
-		return
+		c.Logger().Errorf("Ошибка генерации токена: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка генерации токена"})
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
+	return c.JSON(http.StatusOK, map[string]string{"token": token})
 }
 
-func RegistrationHandler(w http.ResponseWriter, r *http.Request) {
+func RegistrationHandler(c echo.Context) error {
 	var creds models.RegistrationCredentials
-	err := json.NewDecoder(r.Body).Decode(&creds)
-	if err != nil {
-		http.Error(w, "Ошибка при обработке запроса", http.StatusBadRequest)
-		return
+	if err := c.Bind(&creds); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный запрос"})
 	}
 
-	if storage.IsUsernameTaken(creds.Username) {
-		http.Error(w, "Пользователь с таким именем уже существует.", http.StatusUnauthorized)
+	if creds.Username == "" || creds.Password == "" || creds.FirstName == "" || creds.LastName == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Заполнены не все поля"})
 	}
 
-	err = storage.RegisterUser(creds.FirstName, creds.LastName, creds.Username, creds.Password)
+	isUsernameTaken, err := database.IsUsernameTaken(creds.Username)
 	if err != nil {
-		log.Println("Ошибка при сохранении пользователя:", err)
-		http.Error(w, "Ошибка при создании пользователя", http.StatusInternalServerError)
-		return
+		c.Logger().Errorf("Ошибка при проверке существования пользователя: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка при проверке существования пользователя"})
+	}
+	if isUsernameTaken {
+		return c.JSON(http.StatusConflict, map[string]string{"error": "Это имя пользователя уже занято"})
+	}
+
+	err = database.RegisterUser(creds.FirstName, creds.LastName, creds.Username, creds.Password)
+	if err != nil {
+		c.Logger().Errorf("Ошибка при создании пользователя: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка при создании пользователя"})
 	}
 
 	token, err := utils.GenerateJWT(creds.Username)
 	if err != nil {
-		http.Error(w, "Ошибка генерации токена", http.StatusInternalServerError)
-		return
+		c.Logger().Errorf("Ошибка при генерации токена: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка при генерации токена"})
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Пользователь успешно зарегистрирован",
-		"token":   token,
-	})
+	return c.JSON(http.StatusOK, map[string]string{"success": "Пользователь создан", "token": token})
 }

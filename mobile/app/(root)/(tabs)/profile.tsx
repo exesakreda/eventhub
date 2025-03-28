@@ -16,7 +16,7 @@ const Profile = () => {
       const token = await AsyncStorage.getItem("token");
       if (!token) throw new Error("Отсутствует токен");
 
-      const response = await fetch("http://192.168.0.105:8080/getuserdata", {
+      const response = await fetch("http://192.168.0.106:8080/getuserdata", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,

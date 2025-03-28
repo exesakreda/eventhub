@@ -3,6 +3,7 @@ import SolidButton from "@/components/SolidButton";
 import { colors } from "@/constants/colors";
 import React, { useContext, useState } from "react";
 import {
+  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -34,17 +35,22 @@ const SignIn = () => {
       !password ||
       !repeatedPassword
     ) {
-      setError("Указаны не все поля");
+      Alert.alert("Ошибка", "Указаны не все поля");
       return;
     }
 
     if (password !== repeatedPassword) {
-      setError("Пароли не совпадают");
+      Alert.alert("Ошибка", "Пароли не совпадают");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Ошибка", "Пароль должен содержать хотя бы 6 символов");
       return;
     }
 
     try {
-      const response = await fetch("http://192.168.0.105:8080/register", {
+      const response = await fetch("http://192.168.0.106:8080/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ first_name, last_name, username, password }),
@@ -54,10 +60,10 @@ const SignIn = () => {
         auth.login(data.token);
         router.replace("/(root)/(tabs)/home");
       } else {
-        setError("Неверные данные");
+        Alert.alert("Ошибка", data.error);
       }
     } catch (error) {
-      setError("Ошибка сервера");
+      Alert.alert("Ошибка сервера", "Проверьте подключение.");
     }
   };
 

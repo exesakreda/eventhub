@@ -3,11 +3,14 @@ import { Slot, Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useContext } from "react";
 import { AuthProvider } from "./(auth)/AuthContext";
+import { enableScreens } from "react-native-screens";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  enableScreens();
+
   return (
     <AuthProvider>
       <Stack>
