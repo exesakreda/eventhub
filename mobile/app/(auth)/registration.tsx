@@ -1,7 +1,6 @@
-import InputField from "@/components/InputField";
-import SolidButton from "@/components/SolidButton";
-import { colors } from "@/constants/colors";
-import React, { useContext, useState } from "react";
+import InputField from '@/components/InputField'
+import { colors } from '@/constants/colors'
+import React, { useContext, useState } from 'react'
 import {
   Alert,
   Keyboard,
@@ -11,21 +10,23 @@ import {
   Text,
   TouchableWithoutFeedback,
   View,
-} from "react-native";
-import { ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useRouter } from "expo-router";
-import { AuthContext } from "./AuthContext";
-import { fonts } from "@/constants/fonts";
+} from 'react-native'
+import { ScrollView } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { router, useRouter } from 'expo-router'
+import { AuthContext } from './AuthContext'
+import { fonts } from '@/constants/fonts'
+import * as Haptics from 'expo-haptics'
+import CustomButton from '@/components/CustomButton'
 
 const SignIn = () => {
-  const [first_name, setfirst_name] = useState("");
-  const [last_name, setlast_name] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [repeatedPassword, setRepeatedPassword] = useState("");
-  const [error, setError] = useState("");
-  const auth = useContext(AuthContext);
+  const [first_name, setfirst_name] = useState('')
+  const [last_name, setlast_name] = useState('')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [repeatedPassword, setRepeatedPassword] = useState('')
+  const [error, setError] = useState('')
+  const auth = useContext(AuthContext)
 
   const handleRegistration = async () => {
     if (
@@ -35,42 +36,48 @@ const SignIn = () => {
       !password ||
       !repeatedPassword
     ) {
-      Alert.alert("Ошибка", "Указаны не все поля");
-      return;
+      Alert.alert('Ошибка', 'Указаны не все поля')
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+      return
     }
 
     if (password !== repeatedPassword) {
-      Alert.alert("Ошибка", "Пароли не совпадают");
-      return;
+      Alert.alert('Ошибка', 'Пароли не совпадают')
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+      return
     }
 
     if (password.length < 6) {
-      Alert.alert("Ошибка", "Пароль должен содержать хотя бы 6 символов");
-      return;
+      Alert.alert('Ошибка', 'Пароль должен содержать хотя бы 6 символов')
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+      return
     }
 
     try {
-      const response = await fetch("http://192.168.0.106:8080/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('http://192.168.0.106:8080/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ first_name, last_name, username, password }),
-      });
-      const data = await response.json();
+      })
+      const data = await response.json()
       if (response.ok && auth) {
-        auth.login(data.token);
-        router.replace("/(root)/(tabs)/home");
+        auth.login(data.token)
+        router.replace('/(root)/(tabs)/home')
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       } else {
-        Alert.alert("Ошибка", data.error);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+        Alert.alert('Ошибка', data.error)
       }
     } catch (error) {
-      Alert.alert("Ошибка сервера", "Проверьте подключение.");
+      Alert.alert('Ошибка сервера', 'Проверьте подключение.')
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
     }
-  };
+  }
 
   return (
     <SafeAreaView style={styles.content}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "position"}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'position'}
       >
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
           <ScrollView
@@ -127,25 +134,27 @@ const SignIn = () => {
               </View>
             </View>
 
-            <SolidButton
+            <CustomButton
               onPress={handleRegistration}
-              title={"Зарегистрироваться"}
+              title={'Зарегистрироваться'}
+              type={'action'}
+              fill={'solid'}
             />
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
     paddingTop: 24,
-    height: "100%",
+    height: '100%',
   },
   scrollView: {
-    height: "100%",
+    height: '100%',
   },
   title: {
     fontSize: 20,
@@ -171,6 +180,6 @@ const styles = StyleSheet.create({
   repeatedPassword: {
     marginBottom: 8,
   },
-});
+})
 
-export default SignIn;
+export default SignIn

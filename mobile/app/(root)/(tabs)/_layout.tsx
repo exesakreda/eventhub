@@ -1,4 +1,3 @@
-import { colors } from "@/constants/colors";
 import { Tabs } from "expo-router";
 import { Image, Text, View } from "react-native";
 

@@ -4,15 +4,7 @@ const Layout = () => {
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="eventModal"
-        options={{
-          presentation: "modal",
-          headerShown: false,
-          gestureEnabled: true,
-          // modalPresentationStyle: "pageSheet",
-        }}
-      />
+      <Stack.Screen name="modal" options={{ presentation: "modal" }} />
     </Stack>
   );
 };

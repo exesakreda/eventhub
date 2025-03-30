@@ -37,41 +37,123 @@ func GetEvents(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
 	}
 	userId := user.ID
-	status := c.QueryParam("status")
-	role := c.QueryParam("role") // participant | creator
-	orgId := c.QueryParam("organization_id")
 
-	// if role != "participant" && role != "creator" {
-	// 	return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректная роль"})
-	// }
-	// if orgId == "" {
-	// 	return c.JSON(http.StatusBadRequest, map[string]string{"error": "Необходимо передать user_id или organization_id"})
-	// }
-
-	query := database.DB.Where("status = ?", status)
-
-	if role == "participant" {
-		query = query.Where("id IN (?)", database.DB.Table("event_participants").Select("event_id").Where("user_id = ?", userId))
-	} else if role == "creator" {
-		if orgId != "" {
-			query = query.Where("creator_id =  ? AND organization_id = ?", userId, orgId)
-		} else {
-			query = query.Where("creator_id =  ?", userId)
-		}
-	}
-
-	var events []models.Event
-	err := query.Find(&events).Error
-	if err != nil {
-		c.Logger().Errorf("Ошибка при поиске мероприятий: %v", err)
+	// Id мероприятий, в которых участвует пользователь
+	var joinedEventIds []int
+	if err := database.DB.Table("event_participants").Where("user_id = ?", userId).Pluck("event_id", &joinedEventIds).Error; err != nil {
+		c.Logger().Errorf("Ошибка при получении ID мероприятий: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
 	}
 
-	if len(events) == 0 {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "Мероприятия не найдены"})
+	// Мероприятия, в которых участвует пользователь
+	var joinedEvents []models.Event
+	if err := database.DB.Where("id IN (?)", joinedEventIds).Find(&joinedEvents).Error; err != nil {
+		c.Logger().Errorf("Ошибка при загрузке мероприятий пользователя: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
 	}
 
-	return c.JSON(http.StatusOK, events)
+	// Все открытые (доступные) мероприятия
+	var openEvents []models.Event
+	if err := database.DB.Where("is_public = ?", true).Find(&openEvents).Error; err != nil {
+		c.Logger().Errorf("Ошибка при загрузке открытых мероприятий: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
+	}
+
+	return c.JSON(http.StatusOK, map[string][]models.Event{
+		"joined_events": joinedEvents,
+		"open_events":   openEvents,
+	})
+}
+
+func JoinEvent(c echo.Context) error {
+	username := c.Get("username").(string)
+
+	var user models.User
+	result := database.DB.Where("username = ?", username).First(&user)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Пользователь не найден"})
+		}
+		c.Logger().Errorf("Ошибка при запросе к базе данных: %v", result.Error)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
+	}
+	userId := user.ID
+
+	var request struct {
+		EventId uint `json:"event_id"`
+	}
+	if err := c.Bind(&request); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный JSON"})
+	}
+
+	var event models.Event
+	if err := database.DB.First(&event, request.EventId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Мероприятие не найдено"})
+		}
+		c.Logger().Errorf("Ошибка при поиске мероприятия: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
+	}
+
+	var existing models.EventParticipants
+	if err := database.DB.Where("user_id = ? AND event_id = ?", userId, request.EventId).First(&existing).Error; err == nil {
+		return c.JSON(http.StatusConflict, map[string]string{"error": "Вы уже записаны на это мероприятие"})
+	}
+
+	eventParticipant := models.EventParticipants{UserID: userId, EventID: request.EventId}
+	if err := database.DB.Create(&eventParticipant).Error; err != nil {
+		c.Logger().Errorf("Ошибка при записи на мероприятие: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"success": "Пользователь записан на мероприятие"})
+}
+
+func QuitEvent(c echo.Context) error {
+	username := c.Get("username").(string)
+
+	var user models.User
+	result := database.DB.Where("username = ?", username).First(&user)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Пользователь не найден"})
+		}
+		c.Logger().Errorf("Ошибка при запросе к базе данных: %v", result.Error)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
+	}
+	userId := user.ID
+
+	var request struct {
+		EventId uint `json:"event_id"`
+	}
+	if err := c.Bind(&request); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный JSON"})
+	}
+
+	var event models.Event
+	if err := database.DB.First(&event, request.EventId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Мероприятие не найдено"})
+		}
+		c.Logger().Errorf("Ошибка при поиске мероприятия: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
+	}
+
+	var existing models.EventParticipants
+	if err := database.DB.Where("user_id = ? AND event_id = ?", userId, request.EventId).First(&existing).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusConflict, map[string]string{"error": "Вы не записаны на это мероприятие"})
+		}
+		c.Logger().Errorf("Ошибка при отмене записи на мероприятие: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
+	}
+
+	if err := database.DB.Where("user_id = ? AND event_id = ?", userId, request.EventId).Delete(&models.EventParticipants{}).Error; err != nil {
+		c.Logger().Errorf("Ошибка при удалении записи: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка при отмене записи на мероприятие"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"success": "Запись на мероприятие отменена"})
 }
 
 func UpdateEvent(c echo.Context) error {
