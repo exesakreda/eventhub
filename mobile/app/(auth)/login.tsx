@@ -27,11 +27,14 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch(IP_ADDRESS + PORT + '/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      })
+      const response = await fetch(
+        'http://' + IP_ADDRESS + ':' + PORT + '/login',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        }
+      )
 
       if (!response.ok) {
         const errorData = await response.json()

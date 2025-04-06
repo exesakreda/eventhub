@@ -17,13 +17,16 @@ const Profile = () => {
       const token = await AsyncStorage.getItem('token')
       if (!token) throw new Error('Отсутствует токен')
 
-      const response = await fetch(IP_ADDRESS + PORT + '/getuserdata', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      })
+      const response = await fetch(
+        'http://' + IP_ADDRESS + ':' + PORT + '/getuserdata',
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
 
       if (!response.ok) {
         if (response.status === 401) {

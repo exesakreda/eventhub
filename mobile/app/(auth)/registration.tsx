@@ -55,11 +55,14 @@ const SignIn = () => {
     }
 
     try {
-      const response = await fetch(IP_ADDRESS + PORT + '/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ first_name, last_name, username, password }),
-      })
+      const response = await fetch(
+        'http://' + IP_ADDRESS + ':' + PORT + '/register',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ first_name, last_name, username, password }),
+        }
+      )
       const data = await response.json()
       if (response.ok && auth) {
         auth.login(data.token)
