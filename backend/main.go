@@ -31,5 +31,5 @@ func main() {
 	e.GET("/getuserdata", handlers.GetUserData, middleware.AuthMiddleware)
 	e.GET("/getevents", handlers.GetEvents, middleware.AuthMiddleware)
 
-	e.Start(":8080")
+	e.Start(":3000")
 }

@@ -1,4 +1,5 @@
 import { AuthContext } from '@/app/(auth)/AuthContext'
+import { IP_ADDRESS, PORT } from '@/constants/address'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { router } from 'expo-router'
 import { useCallback, useContext, useEffect, useState } from 'react'
@@ -16,7 +17,7 @@ const Profile = () => {
       const token = await AsyncStorage.getItem('token')
       if (!token) throw new Error('Отсутствует токен')
 
-      const response = await fetch('http://192.168.0.106:8080/getuserdata', {
+      const response = await fetch(IP_ADDRESS + PORT + '/getuserdata', {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,

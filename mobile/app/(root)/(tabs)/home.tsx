@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { format, parseISO } from 'date-fns'
 import { ru, tr } from 'date-fns/locale'
+import { IP_ADDRESS, PORT } from '@/constants/address'
 
 type Event = {
   ID: number
@@ -64,7 +65,7 @@ export default function Home() {
       const token = await AsyncStorage.getItem('token')
       if (!token) throw new Error('Отсутствует токен')
 
-      const response = await fetch('http://192.168.0.106:8080/getevents', {
+      const response = await fetch(IP_ADDRESS + PORT + '/getevents', {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,

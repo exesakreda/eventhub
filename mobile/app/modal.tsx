@@ -16,6 +16,7 @@ import { colors } from '@/constants/colors'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Haptics from 'expo-haptics'
 import CustomButton from '@/components/CustomButton'
+import { IP_ADDRESS, PORT } from '@/constants/address'
 
 const ModalScreen = () => {
   const router = useRouter()
@@ -39,7 +40,7 @@ const ModalScreen = () => {
       const token = await AsyncStorage.getItem('token')
       if (!token) throw new Error('Отсутствует токен')
 
-      const response = await fetch('http://192.168.0.106:8080/join_event', {
+      const response = await fetch(IP_ADDRESS + PORT + '/join_event', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -66,7 +67,7 @@ const ModalScreen = () => {
       const token = await AsyncStorage.getItem('token')
       if (!token) throw new Error('Отсутствует токен')
 
-      const response = await fetch('http://192.168.0.106:8080/quit_event', {
+      const response = await fetch(IP_ADDRESS + PORT + '/quit_event', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

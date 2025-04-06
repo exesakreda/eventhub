@@ -18,6 +18,7 @@ import { AuthContext } from './AuthContext'
 import { fonts } from '@/constants/fonts'
 import * as Haptics from 'expo-haptics'
 import CustomButton from '@/components/CustomButton'
+import { IP_ADDRESS, PORT } from '@/constants/address'
 
 const SignIn = () => {
   const [first_name, setfirst_name] = useState('')
@@ -54,7 +55,7 @@ const SignIn = () => {
     }
 
     try {
-      const response = await fetch('http://192.168.0.106:8080/register', {
+      const response = await fetch(IP_ADDRESS + PORT + '/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ first_name, last_name, username, password }),

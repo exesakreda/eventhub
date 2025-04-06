@@ -17,6 +17,7 @@ import { AuthContext } from './AuthContext'
 import { fonts } from '@/constants/fonts'
 import * as Haptics from 'expo-haptics'
 import CustomButton from '@/components/CustomButton'
+import { IP_ADDRESS, PORT } from '@/constants/address'
 
 const Login = () => {
   const auth = useContext(AuthContext)
@@ -26,7 +27,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('http://192.168.0.106:8080/login', {
+      const response = await fetch(IP_ADDRESS + PORT + '/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
