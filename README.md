@@ -23,7 +23,7 @@
 
 ### 🖥 Backend
 
-- Язык: Go (Golang)  
+- Язык: [Go](https://go.dev/)
 - Фреймворк: [Echo](https://echo.labstack.com/)  
 - ORM: [GORM](https://gorm.io/)  
 - База данных: PostgreSQL  
