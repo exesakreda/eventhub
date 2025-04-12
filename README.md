@@ -26,7 +26,7 @@
 - Язык: [Go](https://go.dev/)
 - Фреймворк: [Echo](https://echo.labstack.com/)  
 - ORM: [GORM](https://gorm.io/)  
-- База данных: PostgreSQL  
+- База данных: [PostgreSQL](https://www.postgresql.org/)  
 - Документация API: [Swagger](https://app.swaggerhub.com/apis/ExeSakreda/EventHub/1.0.0)  
 
 ### 📱 Мобильное приложение *(в разработке)*
