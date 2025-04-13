@@ -1,0 +1,319 @@
+definitions:
+  handlers.EventIDRequest:
+    properties:
+      event_id:
+        type: integer
+    type: object
+  models.Event:
+    properties:
+      category:
+        type: string
+      creator_id:
+        type: integer
+      date:
+        type: string
+      description:
+        type: string
+      end_time:
+        type: string
+      is_public:
+        type: boolean
+      location:
+        type: string
+      start_time:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+  models.LoginCredentials:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  models.Organization:
+    type: object
+  models.RegistrationCredentials:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  models.UpdateEventInput:
+    properties:
+      category:
+        type: string
+      creator_id:
+        type: integer
+      date:
+        type: string
+      description:
+        type: string
+      end_time:
+        type: string
+      is_public:
+        type: boolean
+      location:
+        type: string
+      start_time:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /event/create:
+    post:
+      consumes:
+      - application/json
+      description: Хендлер для создания нового мероприятия
+      parameters:
+      - description: Мероприятие
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/models.Event'
+      produces:
+      - application/json
+      responses: {}
+      summary: Создание мероприятия
+      tags:
+      - Events
+  /event/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Хендлер для удаления мероприятия по ID
+      parameters:
+      - description: ID мероприятия
+        in: query
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: Удалить мероприятие
+      tags:
+      - Events
+  /event/join:
+    post:
+      consumes:
+      - application/json
+      description: Хендлер для записи пользователя на мероприятие
+      parameters:
+      - description: ID мероприятия
+        in: body
+        name: event_id
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.EventIDRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Записаться на мероприятие
+      tags:
+      - Events
+  /event/quit:
+    post:
+      consumes:
+      - application/json
+      description: Хендлер для отмены записи пользователя на мероприятие
+      parameters:
+      - description: ID мероприятия
+        in: body
+        name: event_id
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.EventIDRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Отказаться от участия в мероприятии
+      tags:
+      - Events
+  /event/update:
+    put:
+      consumes:
+      - application/json
+      description: Хендлер для обновления данных мероприятия
+      parameters:
+      - description: ID мероприятия
+        in: query
+        name: event_id
+        required: true
+        type: integer
+      - description: Данные для обновления
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateEventInput'
+      produces:
+      - application/json
+      responses: {}
+      summary: Обновить информацию о мероприятии
+      tags:
+      - Events
+  /getuserdata:
+    get:
+      description: Хендлер для получения информации о пользователе по его имени пользователя
+      produces:
+      - application/json
+      responses: {}
+      summary: Получить данные пользователя
+      tags:
+      - Users
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Аутентификация по логину и паролю, возвращает JWT токен
+      parameters:
+      - description: Логин и пароль
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginCredentials'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT токен
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректный запрос
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Неверный логин или пароль
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Вход пользователя
+      tags:
+      - auth
+  /organizations/join:
+    post:
+      consumes:
+      - application/json
+      description: Позволяет пользователю присоединиться к организации по заданным
+        ID
+      parameters:
+      - description: ID пользователя
+        in: query
+        name: user_id
+        required: true
+        type: integer
+      - description: ID организации
+        in: query
+        name: organization_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: Присоединение пользователя к организации
+      tags:
+      - organizations
+  /organizations/quit:
+    post:
+      consumes:
+      - application/json
+      description: Позволяет пользователю выйти из организации. Если пользователь
+        является основателем организации, она будет удалена.
+      parameters:
+      - description: ID пользователя
+        in: query
+        name: user_id
+        required: true
+        type: integer
+      - description: ID организации
+        in: query
+        name: organization_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: Выход пользователя из организации
+      tags:
+      - organizations
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Создание нового пользователя и возврат JWT токена
+      parameters:
+      - description: Данные для регистрации
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegistrationCredentials'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная регистрация и токен
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректный запрос или не все поля заполнены
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Имя пользователя уже занято
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Регистрация пользователя
+      tags:
+      - auth
+  /user/getevents:
+    get:
+      description: Хендлер для получения мероприятий, в которых участвует пользователь,
+        а также всех открытых мероприятий
+      produces:
+      - application/json
+      responses: {}
+      summary: Получение списка мероприятий
+      tags:
+      - Events
+swagger: "2.0"

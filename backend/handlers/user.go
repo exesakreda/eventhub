@@ -10,6 +10,14 @@ import (
 	"gorm.io/gorm"
 )
 
+// @Summary Получить данные пользователя
+// @Description Хендлер для получения информации о пользователе по его имени пользователя
+// @Tags Users
+// @Produce json
+// Success 200 {object} models.User
+// Failure 404 {object} map[string]string{"error": "Пользователь не найден"}
+// Failure 500 {object} map[string]string{"error": "Ошибка при получении данных о пользователе"}
+// @Router /getuserdata [get]
 func GetUserData(c echo.Context) error {
 	username := c.Get("username").(string)
 

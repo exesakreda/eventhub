@@ -10,6 +10,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// @Summary      Вход пользователя
+// @Description  Аутентификация по логину и паролю, возвращает JWT токен
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        credentials  body      models.LoginCredentials  true  "Логин и пароль"
+// @Success      200          {object}  map[string]string         "JWT токен"
+// @Failure      400          {object}  map[string]string         "Некорректный запрос"
+// @Failure      401          {object}  map[string]string         "Неверный логин или пароль"
+// @Failure      500          {object}  map[string]string         "Ошибка сервера"
+// @Router       /login [post]
 func LoginHandler(c echo.Context) error {
 	var creds models.LoginCredentials
 	if err := c.Bind(&creds); err != nil {
@@ -37,6 +48,17 @@ func LoginHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"token": token})
 }
 
+// @Summary      Регистрация пользователя
+// @Description  Создание нового пользователя и возврат JWT токена
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        credentials  body      models.RegistrationCredentials  true  "Данные для регистрации"
+// @Success      200          {object}  map[string]string               "Успешная регистрация и токен"
+// @Failure      400          {object}  map[string]string               "Некорректный запрос или не все поля заполнены"
+// @Failure      409          {object}  map[string]string               "Имя пользователя уже занято"
+// @Failure      500          {object}  map[string]string               "Ошибка сервера"
+// @Router       /register [post]
 func RegistrationHandler(c echo.Context) error {
 	var creds models.RegistrationCredentials
 	if err := c.Bind(&creds); err != nil {

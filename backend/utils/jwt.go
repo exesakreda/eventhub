@@ -29,7 +29,7 @@ func ValidateJWT(tokenString string) (string, error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		username, exists := claims["username"].(string)
+		username, exists := claims["id"].(string)
 		if !exists {
 			return "", errors.New("Поле username отсутствует")
 		}

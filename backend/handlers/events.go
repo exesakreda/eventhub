@@ -9,6 +9,28 @@ import (
 	"gorm.io/gorm"
 )
 
+type EventIDRequest struct {
+	EventId uint `json:"event_id"`
+}
+
+type SuccessResponse struct {
+	Success string `json:"success"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+// @Summary Создание мероприятия
+// @Description Хендлер для создания нового мероприятия
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param event body models.Event true "Мероприятие"
+// Success 200 {object} map[string]string{"success": "Мероприятие создано"}
+// Failure 400 {object} map[string]string{"error": "Некорректный запрос"}
+// Failure 500 {object} map[string]string{"error": "Ошибка при создании мероприятия"}
+// @Router /event/create [post]
 func CreateEventHandler(c echo.Context) error {
 	var event models.Event
 	if err := c.Bind(&event); err != nil {
@@ -24,6 +46,14 @@ func CreateEventHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"success": "Мероприятие создано"})
 }
 
+// @Summary Получение списка мероприятий
+// @Description Хендлер для получения мероприятий, в которых участвует пользователь, а также всех открытых мероприятий
+// @Tags Events
+// @Produce json
+// Success 200 {object} map[string][]models.Event{"joined_events": []models.Event, "open_events": []models.Event}
+// Failure 404 {object} map[string]string{"error": "Пользователь не найден"}
+// Failure 500 {object} map[string]string{"error": "Ошибка сервера"}
+// @Router /user/getevents [get]
 func GetEvents(c echo.Context) error {
 	username := c.Get("username").(string)
 
@@ -38,21 +68,18 @@ func GetEvents(c echo.Context) error {
 	}
 	userId := user.ID
 
-	// Id мероприятий, в которых участвует пользователь
 	var joinedEventIds []int
 	if err := database.DB.Table("event_participants").Where("user_id = ?", userId).Pluck("event_id", &joinedEventIds).Error; err != nil {
 		c.Logger().Errorf("Ошибка при получении ID мероприятий: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
 	}
 
-	// Мероприятия, в которых участвует пользователь
 	var joinedEvents []models.Event
 	if err := database.DB.Where("id IN (?)", joinedEventIds).Find(&joinedEvents).Error; err != nil {
 		c.Logger().Errorf("Ошибка при загрузке мероприятий пользователя: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка сервера"})
 	}
 
-	// Все открытые (доступные) мероприятия
 	var openEvents []models.Event
 	if err := database.DB.Where("is_public = ?", true).Find(&openEvents).Error; err != nil {
 		c.Logger().Errorf("Ошибка при загрузке открытых мероприятий: %v", err)
@@ -65,6 +92,18 @@ func GetEvents(c echo.Context) error {
 	})
 }
 
+// @Summary Записаться на мероприятие
+// @Description Хендлер для записи пользователя на мероприятие
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param event_id body EventIDRequest true "ID мероприятия"
+// Success 200 {object} map[string]string{"success": "Пользователь записан на мероприятие"}
+// Failure 400 {object} map[string]string{"error": "Некорректный JSON"}
+// Failure 404 {object} map[string]string{"error": "Мероприятие не найдено"}
+// Failure 409 {object} map[string]string{"error": "Вы уже записаны на это мероприятие"}
+// Failure 500 {object} map[string]string{"error": "Ошибка сервера"}
+// @Router /event/join [post]
 func JoinEvent(c echo.Context) error {
 	username := c.Get("username").(string)
 
@@ -109,6 +148,18 @@ func JoinEvent(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"success": "Пользователь записан на мероприятие"})
 }
 
+// @Summary Отказаться от участия в мероприятии
+// @Description Хендлер для отмены записи пользователя на мероприятие
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param event_id body EventIDRequest true "ID мероприятия"
+// Success 200 {object} map[string]string{"success": "Запись на мероприятие отменена"}
+// Failure 400 {object} map[string]string{"error": "Некорректный JSON"}
+// Failure 404 {object} map[string]string{"error": "Мероприятие не найдено"}
+// Failure 409 {object} map[string]string{"error": "Вы не записаны на это мероприятие"}
+// Failure 500 {object} map[string]string{"error": "Ошибка сервера"}
+// @Router /event/quit [post]
 func QuitEvent(c echo.Context) error {
 	username := c.Get("username").(string)
 
@@ -156,6 +207,18 @@ func QuitEvent(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"success": "Запись на мероприятие отменена"})
 }
 
+// @Summary Обновить информацию о мероприятии
+// @Description Хендлер для обновления данных мероприятия
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param event_id query int true "ID мероприятия"
+// @Param event body models.UpdateEventInput true "Данные для обновления"
+// Success 200 {object} map[string]string{"success": "Мероприятие обновлено"}
+// Failure 400 {object} map[string]string{"error": "Некорректный запрос"}
+// Failure 404 {object} map[string]string{"error": "Мероприятие не найдено"}
+// Failure 500 {object} map[string]string{"error": "Ошибка при обновлении мероприятия"}
+// @Router /event/update [put]
 func UpdateEvent(c echo.Context) error {
 	id := c.QueryParam("event_id")
 
@@ -205,6 +268,16 @@ func UpdateEvent(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// @Summary Удалить мероприятие
+// @Description Хендлер для удаления мероприятия по ID
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param event_id query int true "ID мероприятия"
+// Success 200 {object} map[string]string{"success": "Мероприятие удалено"}
+// Failure 404 {object} map[string]string{"error": "Мероприятие не найдено"}
+// Failure 500 {object} map[string]string{"error": "Ошибка сервера"}
+// @Router /event/delete [delete]
 func DeleteEvent(c echo.Context) error {
 	eventId := c.QueryParam("event_id")
 

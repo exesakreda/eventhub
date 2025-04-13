@@ -66,7 +66,7 @@ export default function Home() {
       if (!token) throw new Error('Отсутствует токен')
 
       const response = await fetch(
-        'http://' + IP_ADDRESS + ':' + PORT + '/getevents',
+        'http://' + IP_ADDRESS + ':' + PORT + '/user/getevents',
         {
           method: 'GET',
           headers: {

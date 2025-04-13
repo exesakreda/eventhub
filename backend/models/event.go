@@ -5,7 +5,7 @@ import (
 )
 
 type Event struct {
-	gorm.Model
+	gorm.Model  `swaggerignore:"true"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Category    string `json:"category"`
